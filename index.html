@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WD Image Tagger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --primary-color-dark: #1558b0;
+            --secondary-color: #28a745;
+            --secondary-color-dark: #1e7e34;
+            --danger-color: #dc3545;
+            --danger-color-dark: #b02a37;
+            --info-color: #17a2b8;
+            --text-color: #333;
+            --text-color-light: #5f6368;
+            --background-color: #f0f2f5;
+            --surface-color: white;
+            --border-color: #dadce0;
+            --border-color-light: #e0e0e0;
+            --input-background: #f8f9fa;
+            --disabled-color: #e0e0e0;
+            --error-color: #d32f2f;
+            --success-color: #1e7e34;
+            --warning-color: #ffc107;
+            --progress-bar-fill-color: #1a73e8;
+            --progress-bar-background-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Roboto', 'Noto Sans SC', sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .app-container {
+            background-color: var(--surface-color);
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 900px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 35px;
+            font-weight: 500;
+        }
+
+        .input-group {
+            margin-bottom: 22px;
+        }
+        .input-row {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .input-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        #webModelSection {
+            border: 1px solid var(--primary-color-dark);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            background-color: #f8f9fa;
+        }
+        #webModelSection h3 {
+            margin-top: 0;
+            color: var(--primary-color-dark);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+
+        .web-model-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: stretch;
+            margin-bottom: 10px;
+        }
+        .web-model-controls .select-group {
+            flex-grow: 1;
+        }
+        .web-model-buttons-row {
+            display: flex;
+            gap: 10px;
+        }
+        .web-model-buttons-row button {
+            flex-grow: 1;
+        }
+
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color-light);
+        }
+
+        input[type="file"],
+        input[type="number"],
+        input[type="text"],
+        select,
+        button {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input[type="file"],
+        input[type="number"],
+        input[type="text"],
+        select {
+            background-color: var(--surface-color);
+        }
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+            outline: none;
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+            background-color: var(--input-background);
+        }
+        input[type="file"]::file-selector-button {
+            padding: 8px 15px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 12px;
+            transition: background-color 0.2s ease;
+        }
+        input[type="file"]:hover::file-selector-button {
+            background-color: var(--primary-color-dark);
+        }
+
+        .file-info {
+            font-size: 0.85em;
+            color: var(--text-color-light);
+            margin-top: 6px;
+            display: block;
+            min-height: 1.2em;
+        }
+        .loaded { color: var(--success-color); font-weight: bold; }
+        .not-loaded { color: var(--warning-color); }
+        .loading { color: var(--primary-color); font-style: italic; }
+        .local-copy-info { color: var(--secondary-color); font-style: italic;}
+
+
+        hr.section-divider {
+            border: 0;
+            height: 1px;
+            background-color: var(--border-color-light);
+            margin: 35px 0;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        button#downloadAndLoadWebModelButton {
+            background-color: var(--secondary-color);
+            color: white;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            padding: 12px 15px;
+            white-space: nowrap;
+        }
+        button#downloadAndLoadWebModelButton:hover {
+            background-color: var(--secondary-color-dark);
+        }
+         button#downloadAndLoadWebModelButton:disabled {
+            background-color: var(--disabled-color);
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        button#deleteLocalModelButton {
+            background-color: var(--danger-color);
+            color: white;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            padding: 12px 15px;
+            white-space: nowrap;
+        }
+        button#deleteLocalModelButton:hover {
+            background-color: var(--danger-color-dark);
+        }
+        button#deleteLocalModelButton:disabled {
+            background-color: var(--disabled-color);
+            color: #999;
+            cursor: not-allowed;
+        }
+
+
+        button#runButton, button#saveAllButton {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        button#saveAllButton {
+            background-color: var(--secondary-color);
+            display: none;
+        }
+
+        button#runButton:hover, button#saveAllButton:hover {
+            background-color: var(--primary-color-dark);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        button#saveAllButton:hover {
+            background-color: var(--secondary-color-dark);
+        }
+        button#runButton:disabled, button#saveAllButton:disabled {
+            background-color: var(--disabled-color);
+            color: #999;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+
+
+        .status-bar {
+            margin-top: 30px;
+            padding: 12px 15px;
+            background-color: #e8f0fe;
+            border-left: 4px solid var(--primary-color);
+            color: #1c4a7d;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .status-bar .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(26, 115, 232, 0.3);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar-area {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .progress-bar-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.9em;
+            color: var(--text-color-light);
+            margin-bottom: 5px;
+            gap: 10px;
+        }
+        .progress-message {
+            flex-grow: 1;
+            flex-shrink: 1;
+            word-break: break-all;
+            text-align: left;
+        }
+        .progress-details {
+            flex-shrink: 0;
+            white-space: nowrap;
+            text-align: right;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        }
+        .progress-percentage-value {
+            display: inline-block;
+            min-width: 3ch;
+            text-align: right;
+        }
+
+        .progress-bar-background {
+            width: 100%;
+            height: 10px;
+            background-color: var(--progress-bar-background-color);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background-color: var(--progress-bar-fill-color);
+            border-radius: 5px;
+            transition: width 0.1s ease-out, background-color 0.3s ease-out;
+        }
+        .progress-bar-fill.error { background-color: var(--error-color) !important; }
+        .progress-bar-fill.success { background-color: var(--success-color) !important; }
+
+        .input-group input[type="checkbox"],
+        .input-group input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .input-group label.inline-label {
+            display: inline-block;
+            font-weight: normal;
+            vertical-align: middle;
+            margin-bottom: 0;
+        }
+        .radio-group { margin-bottom: 10px; }
+        .hidden { display: none !important; }
+
+        #results-container {
+            margin-top: 35px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .image-result-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color-light);
+            border-radius: 8px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease;
+        }
+        .image-result-card:hover {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+
+        .image-result-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            background-color: #eee;
+        }
+        .image-result-card .filename {
+            font-weight: 500;
+            font-size: 1.05em;
+            margin-bottom: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-color);
+        }
+
+        .tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+
+        .tag-pill {
+            background-color: #e8f0fe;
+            color: #1967d2;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 0.8em;
+            white-space: nowrap;
+        }
+        .tag-pill .score {
+            font-size: 0.9em;
+            color: var(--text-color-light);
+            margin-left: 5px;
+        }
+
+        .copy-button {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 8px 15px;
+            font-size: 0.85em;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: auto;
+            align-self: flex-start;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            width: auto;
+        }
+        .copy-button:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            max-width: 350px;
+            word-wrap: break-word;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.info {
+            background-color: var(--info-color);
+        }
+        .toast.success {
+            background-color: var(--secondary-color);
+        }
+        .toast.error {
+            background-color: var(--danger-color);
+        }
+        .toast.warning {
+            background-color: var(--warning-color);
+            color: #333;
+        }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.20.1/ort.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div id="toast-container"></div>
+    <div class="app-container">
+        <h1>WD Image Tagger</h1>
+
+        <div class="input-group">
+            <label>模型来源:</label>
+            <div class="radio-group">
+                <input type="radio" id="modelSourceLocal" name="modelSource" value="local" checked>
+                <label for="modelSourceLocal" class="inline-label">使用本地文件</label>
+            </div>
+            <div class="radio-group">
+                <input type="radio" id="modelSourceWeb" name="modelSource" value="web">
+                <label for="modelSourceWeb" class="inline-label">从网络下载预定义模型</label>
+            </div>
+        </div>
+
+        <div id="localModelInputs">
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="modelFile">ONNX 模型 (.onnx):</label>
+                    <input type="file" id="modelFile" accept=".onnx">
+                    <span class="file-info" id="modelFileInfoSpan">未选择模型</span>
+                </div>
+                <div class="input-group">
+                    <label for="tagsFile">标签 CSV 文件 (.csv):</label>
+                    <input type="file" id="tagsFile" accept=".csv">
+                    <span class="file-info" id="tagsFileInfoSpan">未选择标签文件</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="webModelSection" class="hidden">
+            <h3>网络模型选项</h3>
+            <div class="web-model-controls">
+                <div class="select-group input-group">
+                    <label for="predefinedModelSelect">选择模型:</label>
+                    <select id="predefinedModelSelect">
+                        <option value="">-- 请选择一个模型 --</option>
+                    </select>
+                </div>
+                <div class="web-model-buttons-row">
+                    <button id="downloadAndLoadWebModelButton" disabled>选择模型后操作</button>
+                    <button id="deleteLocalModelButton" class="hidden">删除本地副本</button>
+                </div>
+            </div>
+            <div class="input-group" style="margin-bottom: 5px;">
+                <input type="checkbox" id="saveModelLocallyCheckbox" checked>
+                <label for="saveModelLocallyCheckbox" class="inline-label">下载后永久保存在本地 (浏览器存储)</label>
+            </div>
+            <span class="file-info" id="webModelInfoSpan"></span>
+            <div class="progress-bar-area" id="webModelProgressArea" style="display: none;">
+                <div class="progress-bar-label" id="webModelProgressLabel">
+                    </div>
+                <div class="progress-bar-background">
+                    <div class="progress-bar-fill" id="webModelProgressBarFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="modelInputSize">模型输入尺寸 (像素):</label>
+            <input type="number" id="modelInputSize" value="448" placeholder="例如：448">
+            <span class="file-info" id="modelInputSizeInfo">请确保此尺寸与所选模型期望的尺寸一致。</span>
+        </div>
+        <div class="input-row">
+            <div class="input-group">
+                <label for="threshold">通用标签阈值:</label>
+                <input type="number" id="threshold" value="0.35" step="0.01" min="0" max="1">
+            </div>
+            <div class="input-group">
+                <label for="charThreshold">角色标签阈值:</label>
+                <input type="number" id="charThreshold" value="0.85" step="0.01" min="0" max="1">
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="input-group">
+            <label for="triggerWord">自定义触发词/前缀/后缀 (可选):</label>
+            <input type="text" id="triggerWord" placeholder="例如：masterpiece, best quality">
+        </div>
+        <div class="input-group">
+            <label for="triggerPosition">触发词位置:</label>
+            <select id="triggerPosition">
+                <option value="none">不添加</option>
+                <option value="prefix">添加到开头 (加逗号)</option>
+                <option value="suffix">添加到结尾 (加逗号)</option>
+                <option value="prefix_nocomma">添加到开头 (不加逗号)</option>
+                <option value="suffix_nocomma">添加到结尾 (不加逗号)</option>
+            </select>
+        </div>
+        <div class="input-group">
+             <input type="checkbox" id="saveTxtFile" checked>
+             <label for="saveTxtFile" class="inline-label">文件夹处理完成后自动下载标签 (ZIP)</label>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="input-group">
+            <label for="imageFiles">选择图像文件:</label>
+            <input type="file" id="imageFiles" accept="image/*" multiple>
+            <span class="file-info" id="imageFilesInfo">未选择图像</span>
+        </div>
+        <div class="input-group">
+            <label for="imageFolder">或选择图像文件夹:</label>
+            <input type="file" id="imageFolder" webkitdirectory directory>
+            <span class="file-info" id="imageFolderInfo">未选择文件夹</span>
+        </div>
+
+        <div class="button-container">
+            <button id="runButton" onclick="runTagging()" disabled>请先加载模型和标签</button>
+            <button id="saveAllButton" onclick="downloadAllTagsAsZip()" disabled>下载所有标签 (ZIP)</button>
+        </div>
+
+        <div class="status-bar">
+            <div class="spinner" id="loadingSpinner"></div>
+            <span id="statusText">准备就绪。</span>
+        </div>
+        <div class="progress-bar-area" id="mainProgressArea" style="display: none;">
+            <div class="progress-bar-label" id="mainProgressLabel">0%</div>
+            <div class="progress-bar-background">
+                <div class="progress-bar-fill" id="mainProgressBarFill"></div>
+            </div>
+        </div>
+
+        <div id="results-container"></div>
+    </div>
+
+    <script>
+        let ortSession = null;
+        let allTags = [];
+        let modelInputName = '';
+        let allProcessedResults = [];
+        let currentlyLoadedWebModel = { name: null, source: null };
+
+        const modelSourceRadios = document.querySelectorAll('input[name="modelSource"]');
+        const localModelInputsDiv = document.getElementById('localModelInputs');
+        const webModelSectionDiv = document.getElementById('webModelSection');
+        const modelFile = document.getElementById('modelFile');
+        const tagsFile = document.getElementById('tagsFile');
+        const modelFileInfoSpan = document.getElementById('modelFileInfoSpan');
+        const tagsFileInfoSpan = document.getElementById('tagsFileInfoSpan');
+        const predefinedModelSelect = document.getElementById('predefinedModelSelect');
+        const downloadAndLoadWebModelButton = document.getElementById('downloadAndLoadWebModelButton');
+        const deleteLocalModelButton = document.getElementById('deleteLocalModelButton');
+        const saveModelLocallyCheckbox = document.getElementById('saveModelLocallyCheckbox');
+        const webModelInfoSpan = document.getElementById('webModelInfoSpan');
+        const webModelProgressArea = document.getElementById('webModelProgressArea');
+        const webModelProgressLabel = document.getElementById('webModelProgressLabel');
+        const webModelProgressBarFill = document.getElementById('webModelProgressBarFill');
+        const modelInputSizeInput = document.getElementById('modelInputSize');
+        const modelInputSizeInfo = document.getElementById('modelInputSizeInfo');
+        const thresholdInput = document.getElementById('threshold');
+        const charThresholdInput = document.getElementById('charThreshold');
+        const imageFilesInput = document.getElementById('imageFiles');
+        const imageFolderInput = document.getElementById('imageFolder');
+        const imageFilesInfo = document.getElementById('imageFilesInfo');
+        const imageFolderInfo = document.getElementById('imageFolderInfo');
+        const runButton = document.getElementById('runButton');
+        const saveAllButton = document.getElementById('saveAllButton');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const statusText = document.getElementById('statusText');
+        const mainProgressArea = document.getElementById('mainProgressArea');
+        const mainProgressLabel = document.getElementById('mainProgressLabel');
+        const mainProgressBarFill = document.getElementById('mainProgressBarFill');
+        const triggerWordInput = document.getElementById('triggerWord');
+        const triggerPositionSelect = document.getElementById('triggerPosition');
+        const saveTxtCheckbox = document.getElementById('saveTxtFile');
+        const resultsContainer = document.getElementById('results-container');
+        const toastContainer = document.getElementById('toast-container');
+
+        const DB_NAME = 'WDImageTaggerDB';
+        const DB_VERSION = 1;
+        const MODEL_STORE_NAME = 'PredefinedModels';
+        let db = null;
+
+        const PREDEFINED_MODELS = [
+            { name: "wd-eva02-large-tagger-v3", modelUrl: "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/resolve/main/model.onnx", tagsUrl: "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/resolve/main/selected_tags.csv", inputSize: 448 },
+            { name: "wd-vit-tagger-v3", modelUrl: "https://huggingface.co/SmilingWolf/wd-vit-tagger-v3/resolve/main/model.onnx", tagsUrl: "https://huggingface.co/SmilingWolf/wd-vit-tagger-v3/resolve/main/selected_tags.csv", inputSize: 448 },
+            { name: "wd-swinv2-tagger-v3", modelUrl: "https://huggingface.co/SmilingWolf/wd-swinv2-tagger-v3/resolve/main/model.onnx", tagsUrl: "https://huggingface.co/SmilingWolf/wd-swinv2-tagger-v3/resolve/main/selected_tags.csv", inputSize: 448 },
+            { name: "wd-convnext-tagger-v3", modelUrl: "https://huggingface.co/SmilingWolf/wd-convnext-tagger-v3/resolve/main/model.onnx", tagsUrl: "https://huggingface.co/SmilingWolf/wd-convnext-tagger-v3/resolve/main/selected_tags.csv", inputSize: 448 },
+            { name: "wd-v1-4-moat-tagger-v2", modelUrl: "https://huggingface.co/SmilingWolf/wd-v1-4-moat-tagger-v2/resolve/main/model.onnx", tagsUrl: "https://huggingface.co/SmilingWolf/wd-v1-4-moat-tagger-v2/resolve/main/selected_tags.csv", inputSize: 448 },
+            { name: "wd-v1-4-convnextv2-tagger-v2", modelUrl: "https://huggingface.co/SmilingWolf/wd-v1-4-convnextv2-tagger-v2/resolve/main/model.onnx", tagsUrl: "https://huggingface.co/SmilingWolf/wd-v1-4-convnextv2-tagger-v2/resolve/main/selected_tags.csv", inputSize: 448 },
+            { name: "Z3D-E621-Convnext", modelUrl: "https://huggingface.co/toynya/Z3D-E621-Convnext/resolve/main/model.onnx", tagsUrl: "https://huggingface.co/toynya/Z3D-E621-Convnext/resolve/main/tags-selected.csv", inputSize: 448 }
+        ];
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === null || typeof bytes === 'undefined' || isNaN(bytes) || bytes < 0) return '未知大小';
+            const k = 1024;
+            const dm = Math.max(0, decimals);
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            if (bytes === 0) return (0).toFixed(dm) + ' ' + sizes[0];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            const formattedNumber = (bytes / Math.pow(k, i)).toFixed(dm);
+            return formattedNumber + ' ' + sizes[i];
+        }
+
+        function concatenateBlobs(uint8ArrayChunks) {
+            const totalLength = uint8ArrayChunks.reduce((acc, value) => acc + value.length, 0);
+            const result = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const arr of uint8ArrayChunks) {
+                result.set(arr, offset);
+                offset += arr.length;
+            }
+            return new Blob([result]);
+        }
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => {
+                    if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                });
+                setTimeout(() => {
+                     if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                }, 500);
+            }, duration);
+        }
+
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                if (db) {
+                    resolve(db);
+                    return;
+                }
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = (event) => {
+                    reject("IndexedDB无法打开。");
+                };
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const tempDb = event.target.result;
+                    if (!tempDb.objectStoreNames.contains(MODEL_STORE_NAME)) {
+                        tempDb.createObjectStore(MODEL_STORE_NAME, { keyPath: 'name' });
+                    }
+                };
+            });
+        }
+
+        async function saveModelToDB(modelData) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([MODEL_STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(MODEL_STORE_NAME);
+                const request = store.put({ ...modelData, lastAccessed: new Date() });
+                request.onsuccess = () => resolve();
+                request.onerror = (event) => {
+                    reject("保存模型到本地存储失败。");
+                };
+            });
+        }
+
+        async function getModelFromDB(modelName) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([MODEL_STORE_NAME], 'readonly');
+                const store = transaction.objectStore(MODEL_STORE_NAME);
+                const request = store.get(modelName);
+                request.onsuccess = (event) => {
+                    resolve(event.target.result || null);
+                };
+                request.onerror = (event) => {
+                    reject("从本地存储读取模型失败。");
+                };
+            });
+        }
+
+        async function deleteModelFromDB(modelName) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([MODEL_STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(MODEL_STORE_NAME);
+                const request = store.delete(modelName);
+                request.onsuccess = () => {
+                    resolve(true);
+                }
+                request.onerror = (event) => {
+                     reject("从本地存储删除模型失败。");
+                };
+            });
+        }
+
+        async function initializeApp() {
+            await initOrt();
+            populatePredefinedModels();
+            try {
+                await initDB();
+                updateStatus("准备就绪。IndexedDB 已初始化。", false);
+            } catch (e) {
+                 showToast(`IndexedDB 初始化失败: ${e}`, 'error');
+                 updateStatus(`准备就绪。IndexedDB 初始化失败: ${e}。`, false);
+            }
+            handleModelSourceChange();
+            checkRunButtonState();
+        }
+
+        function populatePredefinedModels() {
+            PREDEFINED_MODELS.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.name;
+                option.textContent = model.name;
+                predefinedModelSelect.appendChild(option);
+            });
+        }
+
+        async function initOrt() {
+            try {
+                updateStatus("正在初始化 ONNX Runtime Web...", true);
+                ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4;
+                if (!navigator.gpu) {
+                    updateStatus("WebGPU 不可用。将回退到 WASM (速度较慢)。", false);
+                    showToast("WebGPU 不可用，使用 WASM 后端。", "warning");
+                } else {
+                    ort.env.executionProviders = ['webgpu', 'wasm'];
+                    updateStatus("ONNX Runtime Web 初始化完成。", false);
+                }
+            } catch (e) {
+                updateStatus(`初始化 ONNX Runtime 失败: ${e.message}`, false);
+                showToast(`初始化 ONNX Runtime 失败: ${e.message}`, 'error');
+                return false;
+            }
+            return true;
+        }
+
+        function resetLoadedModelAndTagsState() {
+            ortSession = null;
+            allTags = [];
+            currentlyLoadedWebModel = { name: null, source: null };
+            modelFile.value = '';
+            tagsFile.value = '';
+            modelFileInfoSpan.textContent = '未选择模型';
+            modelFileInfoSpan.className = 'file-info not-loaded';
+            tagsFileInfoSpan.textContent = '未选择标签文件';
+            tagsFileInfoSpan.className = 'file-info not-loaded';
+            webModelInfoSpan.textContent = '';
+            webModelInfoSpan.className = 'file-info';
+            webModelProgressArea.style.display = 'none';
+            webModelProgressBarFill.style.width = '0%';
+            webModelProgressBarFill.className = 'progress-bar-fill';
+            webModelProgressLabel.innerHTML = `<span class="progress-message">准备下载...</span><span class="progress-details"></span>`;
+            downloadAndLoadWebModelButton.disabled = true;
+            downloadAndLoadWebModelButton.textContent = '选择模型后操作';
+            deleteLocalModelButton.classList.add('hidden');
+            saveModelLocallyCheckbox.disabled = true;
+            checkRunButtonState();
+        }
+
+        function handleModelSourceChange() {
+            resetLoadedModelAndTagsState();
+            const selectedSource = document.querySelector('input[name="modelSource"]:checked').value;
+            if (selectedSource === 'local') {
+                localModelInputsDiv.classList.remove('hidden');
+                webModelSectionDiv.classList.add('hidden');
+                modelInputSizeInput.readOnly = false;
+                modelInputSizeInfo.textContent = "请确保此尺寸与所选模型期望的尺寸一致。";
+            } else {
+                localModelInputsDiv.classList.add('hidden');
+                webModelSectionDiv.classList.remove('hidden');
+                modelInputSizeInput.readOnly = true;
+                modelInputSizeInfo.textContent = "模型输入尺寸将由选定模型设置。";
+                onPredefinedModelSelectChange();
+            }
+        }
+        modelSourceRadios.forEach(radio => {
+            radio.addEventListener('change', handleModelSourceChange);
+        });
+
+        async function onPredefinedModelSelectChange() {
+            const modelName = predefinedModelSelect.value;
+            webModelProgressArea.style.display = 'none';
+            webModelProgressBarFill.style.width = '0%';
+            webModelProgressBarFill.className = 'progress-bar-fill';
+            deleteLocalModelButton.classList.add('hidden');
+            if (!modelName) {
+                webModelInfoSpan.textContent = '请从列表选择一个模型。';
+                downloadAndLoadWebModelButton.disabled = true;
+                downloadAndLoadWebModelButton.textContent = '选择模型后操作';
+                saveModelLocallyCheckbox.disabled = true;
+                saveModelLocallyCheckbox.checked = true;
+                modelInputSizeInput.value = PREDEFINED_MODELS[0]?.inputSize || 448;
+                return;
+            }
+            if (currentlyLoadedWebModel.name && currentlyLoadedWebModel.name !== modelName) {
+                 resetLoadedModelAndTagsState();
+            }
+            saveModelLocallyCheckbox.disabled = false;
+            const selectedModelConfig = PREDEFINED_MODELS.find(m => m.name === modelName);
+            if (selectedModelConfig) {
+                 modelInputSizeInput.value = selectedModelConfig.inputSize;
+            }
+            try {
+                const localModelData = await getModelFromDB(modelName);
+                if (localModelData) {
+                    webModelInfoSpan.innerHTML = `已选择: ${modelName}。<br><span class="local-copy-info">本地已存有副本 (上次访问: ${new Date(localModelData.lastAccessed).toLocaleDateString()})。</span>`;
+                    downloadAndLoadWebModelButton.textContent = '加载本地副本';
+                    deleteLocalModelButton.classList.remove('hidden');
+                    deleteLocalModelButton.disabled = false;
+                    saveModelLocallyCheckbox.disabled = true;
+                    saveModelLocallyCheckbox.checked = true;
+                } else {
+                    webModelInfoSpan.textContent = `已选择: ${modelName}。点击按钮以下载和加载。`;
+                    downloadAndLoadWebModelButton.textContent = '下载并加载模型';
+                    saveModelLocallyCheckbox.checked = true;
+                }
+                downloadAndLoadWebModelButton.disabled = false;
+            } catch (e) {
+                webModelInfoSpan.textContent = `检查本地存储时出错: ${e}`;
+                showToast(`检查本地存储时出错: ${e}`, 'error');
+                downloadAndLoadWebModelButton.textContent = '下载并加载模型';
+                downloadAndLoadWebModelButton.disabled = false;
+                saveModelLocallyCheckbox.checked = true;
+            }
+            checkRunButtonState();
+        }
+        predefinedModelSelect.addEventListener('change', onPredefinedModelSelectChange);
+
+        downloadAndLoadWebModelButton.addEventListener('click', async () => {
+            const modelName = predefinedModelSelect.value;
+            if (!modelName) {
+                 showToast('错误: 没有选择模型。', 'error');
+                webModelInfoSpan.textContent = '错误: 没有选择模型。';
+                return;
+            }
+            await loadPredefinedModel(modelName);
+        });
+
+        deleteLocalModelButton.addEventListener('click', async () => {
+            const modelName = predefinedModelSelect.value;
+            if (!modelName) {
+                showToast('错误: 没有选择模型进行删除。', 'error');
+                webModelInfoSpan.textContent = '错误: 没有选择模型进行删除。';
+                return;
+            }
+            if (confirm(`您确定要从本地存储中删除模型 "${modelName}" 吗？此操作不可撤销。`)) {
+                try {
+                    updateStatus(`正在删除本地模型 ${modelName}...`, true);
+                    deleteLocalModelButton.disabled = true;
+                    downloadAndLoadWebModelButton.disabled = true;
+                    await deleteModelFromDB(modelName);
+                    updateStatus(`模型 ${modelName} 已从本地删除。`, false);
+                    showToast(`模型 ${modelName} 已从本地删除。`, 'success');
+                    if (currentlyLoadedWebModel.name === modelName && currentlyLoadedWebModel.source === 'web') {
+                        resetLoadedModelAndTagsState();
+                         webModelInfoSpan.textContent = `模型 ${modelName} 的本地副本已删除。`;
+                    }
+                    await onPredefinedModelSelectChange();
+                } catch (e) {
+                    updateStatus(`删除模型 ${modelName} 失败: ${e.message}`, false);
+                    showToast(`删除模型 ${modelName} 失败: ${e.message}`, 'error');
+                    webModelInfoSpan.textContent = `删除模型 ${modelName} 失败: ${e.message}`;
+                } finally {
+                    checkRunButtonState();
+                }
+            }
+        });
+
+        async function loadPredefinedModel(modelName) {
+            const selectedModelConfig = PREDEFINED_MODELS.find(m => m.name === modelName);
+            if (!selectedModelConfig) {
+                 showToast(`错误: 模型 "${modelName}" 配置未找到。`, 'error');
+                 webModelInfoSpan.textContent = `错误: 模型 "${modelName}" 配置未找到。`;
+                 updateWebModelProgress(`模型 "${modelName}" 配置未找到。`, 0, null, null, true);
+                 return;
+            }
+            predefinedModelSelect.disabled = true;
+            downloadAndLoadWebModelButton.disabled = true;
+            downloadAndLoadWebModelButton.textContent = '处理中...';
+            deleteLocalModelButton.disabled = true;
+            saveModelLocallyCheckbox.disabled = true;
+            let modelBuffer, tagsTextToParse;
+            try {
+                const localModelData = await getModelFromDB(modelName);
+                if (localModelData) {
+                    updateStatus(`正在从本地存储读取 ${modelName}...`, true);
+                    webModelInfoSpan.textContent = `正在从本地加载 ${modelName}...`;
+                    webModelInfoSpan.className = 'file-info loading';
+                    updateWebModelProgress(`正在从本地加载 ${modelName}...`, 25, null, null, false, false);
+                    modelBuffer = await localModelData.modelBlob.arrayBuffer();
+                    tagsTextToParse = localModelData.tagsText;
+                    updateWebModelProgress(`正在更新访问时间...`, 50, null, null, false, false);
+                    await saveModelToDB({
+                        name: localModelData.name, modelBlob: localModelData.modelBlob,
+                        tagsText: localModelData.tagsText, inputSize: localModelData.inputSize
+                    });
+                    updateWebModelProgress(`${modelName} 已从本地加载!`, 100, null, null, false, true);
+                } else {
+                    if (selectedModelConfig.modelUrl.startsWith("PLACEHOLDER_") || selectedModelConfig.tagsUrl.startsWith("PLACEHOLDER_")) {
+                         throw new Error(`"${modelName}" 的配置不完整 (URL占位符)。请管理员更新脚本。`);
+                    }
+                    webModelInfoSpan.textContent = `准备下载 ${modelName}...`;
+                    webModelInfoSpan.className = 'file-info loading';
+                    updateStatus(`开始下载 ${modelName}...`, true);
+                    showToast(`开始下载 ${modelName}...`, 'info');
+                    const modelResponse = await fetch(selectedModelConfig.modelUrl);
+                    if (!modelResponse.ok) throw new Error(`模型下载失败: ${modelResponse.statusText} (${modelResponse.status})`);
+                    const totalModelBytes = Number(modelResponse.headers.get('Content-Length')) || -1;
+                    let loadedModelBytes = 0;
+                    const readerModel = modelResponse.body.getReader();
+                    const chunksModel = [];
+                    updateWebModelProgress(`(1/2) 下载 ONNX: ${selectedModelConfig.name.substring(0,20)}...`, 0, 0, totalModelBytes);
+                    while (true) {
+                        const { done, value } = await readerModel.read();
+                        if (done) break;
+                        chunksModel.push(value);
+                        loadedModelBytes += value.byteLength;
+                        const progressPercent = (totalModelBytes > 0) ? (loadedModelBytes / totalModelBytes) * 100 : 0;
+                        updateWebModelProgress(
+                            `(1/2) 下载 ONNX: ${selectedModelConfig.name.substring(0,20)}...`,
+                            progressPercent, loadedModelBytes, totalModelBytes
+                        );
+                    }
+                    updateWebModelProgress(
+                        `(1/2) ONNX 模型 ${selectedModelConfig.name.substring(0,20)} 下载完成`,
+                        100, loadedModelBytes, totalModelBytes, false, true
+                    );
+                    const modelBlob = concatenateBlobs(chunksModel);
+                    modelBuffer = await modelBlob.arrayBuffer();
+                    const tagsResponse = await fetch(selectedModelConfig.tagsUrl);
+                    if (!tagsResponse.ok) throw new Error(`标签下载失败: ${tagsResponse.statusText} (${tagsResponse.status})`);
+                    const totalTagsBytes = Number(tagsResponse.headers.get('Content-Length')) || -1;
+                    let loadedTagsBytes = 0;
+                    const readerTags = tagsResponse.body.getReader();
+                    const chunksTags = [];
+                    updateWebModelProgress(`(2/2) 下载标签 CSV...`, 0, 0, totalTagsBytes);
+                    while (true) {
+                        const { done, value } = await readerTags.read();
+                        if (done) break;
+                        chunksTags.push(value);
+                        loadedTagsBytes += value.byteLength;
+                        const progressPercent = (totalTagsBytes > 0) ? (loadedTagsBytes / totalTagsBytes) * 100 : 0;
+                        updateWebModelProgress(
+                            `(2/2) 下载标签 CSV...`,
+                            progressPercent, loadedTagsBytes, totalTagsBytes
+                        );
+                    }
+                    updateWebModelProgress(
+                        `(2/2) 标签 CSV 下载完成`,
+                        100, loadedTagsBytes, totalTagsBytes, false, true
+                    );
+                    const tagsBlob = concatenateBlobs(chunksTags);
+                    tagsTextToParse = await tagsBlob.text();
+                    if (saveModelLocallyCheckbox.checked) {
+                        updateStatus(`正在保存 ${modelName} 到本地存储...`, true);
+                        webModelInfoSpan.textContent = `正在保存 ${modelName} 到本地存储...`;
+                        await saveModelToDB({
+                            name: selectedModelConfig.name, modelBlob: new Blob([modelBuffer]),
+                            tagsText: tagsTextToParse, inputSize: selectedModelConfig.inputSize
+                        });
+                        webModelInfoSpan.textContent = `${modelName} 已下载并保存到本地。`;
+                         updateStatus(`${modelName} 已保存到本地。`, false);
+                         showToast(`${modelName} 已保存到本地。`, 'success');
+                    } else {
+                        webModelInfoSpan.textContent = `${modelName} 已下载 (未保存到本地)。`;
+                         showToast(`${modelName} 已下载。`, 'info');
+                    }
+                }
+                webModelInfoSpan.className = 'file-info loading';
+                updateStatus(`正在加载 ${modelName} 到 ONNX Runtime...`, true);
+                webModelInfoSpan.textContent = `正在加载 ${modelName} 到 ONNX Runtime...`;
+                updateWebModelProgress(`正在创建推理会话...`, localModelData ? 75 : 90, null, null, false, false);
+                await loadModelFromArrayBuffer(modelBuffer, selectedModelConfig.name);
+                await parseAndSetTags(tagsTextToParse, selectedModelConfig.name);
+                currentlyLoadedWebModel = { name: selectedModelConfig.name, source: 'web' };
+                webModelInfoSpan.textContent = `${selectedModelConfig.name} 已成功加载。`;
+                webModelInfoSpan.className = 'file-info loaded';
+                updateStatus(`${selectedModelConfig.name} 已加载。`, false);
+                showToast(`${selectedModelConfig.name} 已成功加载。`, 'success');
+                updateWebModelProgress(`${selectedModelConfig.name} 已成功加载。`, 100, null, null, false, true);
+            } catch (e) {
+                const errorMessage = `处理预定义模型 "${modelName}" 失败: ${e.message}`;
+                showToast(errorMessage, 'error');
+                updateWebModelProgress(errorMessage, (ortSession || allTags.length > 0 ? 50 : 0) , null, null, true, false);
+                webModelInfoSpan.textContent = errorMessage;
+                webModelInfoSpan.className = 'file-info not-loaded';
+                updateStatus(errorMessage, false);
+                resetLoadedModelAndTagsState();
+            } finally {
+                predefinedModelSelect.disabled = false;
+                await onPredefinedModelSelectChange();
+                checkRunButtonState();
+            }
+        }
+
+        modelFile.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                modelFileInfoSpan.textContent = '未选择模型';
+                modelFileInfoSpan.className = 'file-info not-loaded';
+                ortSession = null; checkRunButtonState(); return;
+            }
+            updateStatus(`准备加载本地模型: ${file.name}...`, true);
+            modelFileInfoSpan.textContent = `已选择: ${file.name}`; modelFileInfoSpan.className = 'file-info';
+            try {
+                updateStatus(`正在读取文件: ${file.name}...`, true);
+                const buffer = await file.arrayBuffer();
+                updateStatus(`正在创建推理会话: ${file.name}...`, true);
+                await loadModelFromArrayBuffer(buffer, file.name);
+                currentlyLoadedWebModel = { name: file.name, source: 'localFile' };
+                updateStatus(`本地模型 "${file.name}" 已加载。`, false);
+                showToast(`本地模型 "${file.name}" 已加载。`, 'success');
+                modelFileInfoSpan.classList.add('loaded');
+            } catch (e) {
+                updateStatus(`加载本地模型 "${file.name}" 失败: ${e.message}`, false);
+                showToast(`加载本地模型 "${file.name}" 失败: ${e.message}`, 'error');
+                modelFileInfoSpan.classList.add('not-loaded');
+                 resetLoadedModelAndTagsState();
+            }
+            checkRunButtonState();
+        });
+
+        tagsFile.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                tagsFileInfoSpan.textContent = '未选择标签文件';
+                tagsFileInfoSpan.className = 'file-info not-loaded';
+                allTags = []; checkRunButtonState(); return;
+            }
+            updateStatus(`准备加载本地标签: ${file.name}...`, true);
+            tagsFileInfoSpan.textContent = `已选择: ${file.name}`; tagsFileInfoSpan.className = 'file-info';
+            try {
+                updateStatus(`正在读取标签文件: ${file.name}...`, true);
+                const text = await file.text();
+                 updateStatus(`正在解析标签: ${file.name}...`, true);
+                await parseAndSetTags(text, file.name);
+                updateStatus(`本地标签 "${file.name}" 加载: ${allTags.length} 个标签。`, false);
+                showToast(`本地标签 "${file.name}" 加载: ${allTags.length} 个标签。`, 'success');
+                tagsFileInfoSpan.classList.add('loaded');
+            } catch (e) {
+                updateStatus(`加载本地标签 "${file.name}" 失败: ${e.message}`, false);
+                showToast(`加载本地标签 "${file.name}" 失败: ${e.message}`, 'error');
+                tagsFileInfoSpan.classList.add('not-loaded');
+                allTags = [];
+            }
+            checkRunButtonState();
+        });
+
+        async function loadModelFromArrayBuffer(buffer, modelNameForStatus) {
+            try {
+                ortSession = await ort.InferenceSession.create(buffer, { executionProviders: [navigator.gpu ? 'webgpu' : 'wasm'] });
+                modelInputName = ortSession.inputNames[0];
+                return true;
+            } catch (e) {
+                ortSession = null;
+                throw e;
+            }
+        }
+
+        async function parseAndSetTags(csvText, sourceNameForStatus) {
+             try {
+                const lines = csvText.split(/\r?\n/);
+                allTags = [];
+                let nameIndex = -1, categoryIndex = -1;
+                if (lines.length > 0) {
+                    const headerParts = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
+                    nameIndex = headerParts.indexOf('name');
+                    categoryIndex = headerParts.indexOf('category');
+                    if (nameIndex === -1) {
+                        if (headerParts.length > 1 && isNaN(parseInt(headerParts[0])) && !isNaN(parseInt(headerParts[1]))) nameIndex = 0;
+                        else if (headerParts.length > 1 && !isNaN(parseInt(headerParts[0])) && isNaN(parseInt(headerParts[1]))) nameIndex = 1;
+                        else if (headerParts.length === 1 && isNaN(parseInt(headerParts[0]))) nameIndex = 0;
+                        else nameIndex = 1;
+                    }
+                     if (categoryIndex === -1) {
+                        if (headerParts.length > 2 && !isNaN(parseInt(headerParts[0])) && isNaN(parseInt(headerParts[1])) && !isNaN(parseInt(headerParts[2]))) categoryIndex = 2;
+                        else if (headerParts.length > 1 && isNaN(parseInt(headerParts[0])) && !isNaN(parseInt(headerParts[1]))) categoryIndex = 1;
+                        else if (headerParts.length > 1 && !isNaN(parseInt(headerParts[0])) && isNaN(parseInt(headerParts[1]))) categoryIndex = 0;
+                        else categoryIndex = 2;
+                    }
+                }
+                for (let i = (nameIndex !== -1 || categoryIndex !== -1 ? 1 : 0) ; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue;
+                    const parts = lines[i].split(',');
+                    let tagName = "unknown_tag";
+                    let category = 0;
+                    if (nameIndex !== -1 && parts.length > nameIndex) {
+                        tagName = parts[nameIndex].replace(/_/g, ' ').trim().replace(/"/g, '');
+                    } else if (parts.length > 1) {
+                        tagName = parts[1].replace(/_/g, ' ').trim().replace(/"/g, '');
+                    } else if (parts.length > 0) {
+                         tagName = parts[0].replace(/_/g, ' ').trim().replace(/"/g, '');
+                    }
+                    if (categoryIndex !== -1 && parts.length > categoryIndex) {
+                        const catVal = parseInt(parts[categoryIndex]);
+                        if (!isNaN(catVal)) category = catVal;
+                    } else if (nameIndex !== -1 && nameIndex === 1 && parts.length > 0) {
+                        const catVal = parseInt(parts[0]);
+                        if (!isNaN(catVal)) category = catVal;
+                    }
+                    allTags.push({ name: tagName, category: category });
+                }
+                if(allTags.length === 0 && lines.length > (nameIndex !== -1 || categoryIndex !== -1 ? 1 : 0)) {
+                    showToast(`警告：标签文件 "${sourceNameForStatus}" 解析后得到0个标签，请检查格式。`, 'warning', 5000);
+                }
+                return true;
+            } catch (e) {
+                allTags = [];
+                throw e;
+            }
+        }
+
+        let _webModelProgressData = null;
+        let _webModelProgressRafId = null;
+
+        function _performWebModelProgressUpdate() {
+            if (!_webModelProgressData) {
+                _webModelProgressRafId = null; // Ensure rAF can be rescheduled if data comes later
+                return;
+            }
+
+            const { labelMessage, percentage, loadedBytes, totalBytes, isError, isSuccess } = _webModelProgressData;
+            // It's important to clear _webModelProgressData *before* any potential early returns or errors in this function,
+            // but for simplicity and directness, we'll clear it after reading.
+            // If this function had complex logic that could fail, clearing earlier or using a try/finally would be more robust.
+
+            webModelProgressArea.style.display = 'block';
+            let statusMessagePart = labelMessage;
+            let detailsPartText = "";
+            const formattedLoadedBytes = loadedBytes !== null ? formatBytes(loadedBytes, 2) : null;
+            const formattedTotalBytes = totalBytes !== null ? formatBytes(totalBytes, 2) : null;
+            const percentageValue = (typeof percentage === 'number' && !isNaN(percentage) && percentage >= 0 && percentage <= 100)
+                                         ? Math.floor(percentage)
+                                         : null;
+            let percentageDisplayHtml = "";
+            if (percentageValue !== null) {
+                percentageDisplayHtml = ` (<span class="progress-percentage-value">${percentageValue}</span>%)`;
+            }
+
+            if (formattedLoadedBytes !== null && formattedTotalBytes !== null && totalBytes > 0) {
+                detailsPartText = `${formattedLoadedBytes} / ${formattedTotalBytes}${percentageDisplayHtml}`;
+            } else if (formattedLoadedBytes !== null) {
+                detailsPartText = `${formattedLoadedBytes}${percentageDisplayHtml}`;
+            } else if (percentageDisplayHtml) {
+                detailsPartText = percentageDisplayHtml.trim();
+            }
+
+            if (detailsPartText.trim() === "" && formattedLoadedBytes !== null && (totalBytes === null || totalBytes <=0) ) {
+                detailsPartText = `${formattedLoadedBytes} 下载中`;
+            }
+
+            webModelProgressLabel.innerHTML = `
+                <span class="progress-message">${statusMessagePart}</span>
+                <span class="progress-details">${detailsPartText.trim()}</span>
+            `;
+            const fillPercentage = (typeof percentage === 'number' && !isNaN(percentage)) ? Math.max(0, Math.min(100, percentage)) : 0;
+            webModelProgressBarFill.style.width = fillPercentage + '%';
+            webModelProgressBarFill.className = 'progress-bar-fill'; // Reset classes
+            if (isError) {
+                webModelProgressBarFill.classList.add('error');
+            } else if (isSuccess) {
+                webModelProgressBarFill.classList.add('success');
+            }
+            
+            _webModelProgressData = null; // Consume/clear the data after using it
+            _webModelProgressRafId = null; // Allow new rAF scheduling
+        }
+
+        function updateWebModelProgress(labelMessage, percentage, loadedBytes = null, totalBytes = null, isError = false, isSuccess = false) {
+            _webModelProgressData = { labelMessage, percentage, loadedBytes, totalBytes, isError, isSuccess };
+            if (!_webModelProgressRafId) {
+                _webModelProgressRafId = requestAnimationFrame(_performWebModelProgressUpdate);
+            }
+        }
+
+        function checkRunButtonState() {
+            if (ortSession && allTags.length > 0) {
+                runButton.disabled = false; runButton.textContent = '开始打标';
+            } else {
+                runButton.disabled = true;
+                let msg = "请先";
+                const currentSource = document.querySelector('input[name="modelSource"]:checked').value;
+                if (currentSource === 'local') {
+                    msg += "加载本地";
+                     if (!ortSession) msg += "模型";
+                     if (!ortSession && allTags.length === 0) msg += "和";
+                     if (allTags.length === 0) msg += "标签";
+                } else {
+                    msg += "选择并加载预定义";
+                    if (!ortSession) msg += "模型";
+                }
+                runButton.textContent = msg;
+            }
+            const hasValidResultsToSave = allProcessedResults.some(r => r.tagsString && !r.tagsString.startsWith("错误:"));
+            saveAllButton.disabled = !hasValidResultsToSave;
+            saveAllButton.style.display = hasValidResultsToSave ? 'inline-block' : 'none';
+        }
+
+        function resetMainProgress() {
+            mainProgressArea.style.display = 'none';
+            mainProgressBarFill.style.width = '0%';
+            mainProgressLabel.textContent = '0%';
+        }
+
+        imageFilesInput.addEventListener('change', (event) => {
+            if (event.target.files.length > 0) {
+                imageFilesInfo.textContent = `已选择 ${event.target.files.length} 个图像文件。`;
+                imageFilesInfo.className = 'file-info loaded';
+                imageFolderInput.value = ''; imageFolderInfo.textContent = '未选择文件夹'; imageFolderInfo.className = 'file-info';
+                allProcessedResults = []; resetMainProgress(); checkRunButtonState();
+            } else {
+                imageFilesInfo.textContent = '未选择图像'; imageFilesInfo.className = 'file-info';
+            }
+        });
+
+        imageFolderInput.addEventListener('change', (event) => {
+             if (event.target.files.length > 0) {
+                imageFolderInfo.textContent = `已选择文件夹，包含 ${event.target.files.length} 个项目。`;
+                imageFolderInfo.className = 'file-info loaded';
+                imageFilesInput.value = ''; imageFilesInfo.textContent = '未选择图像'; imageFilesInfo.className = 'file-info';
+                allProcessedResults = []; resetMainProgress(); checkRunButtonState();
+            } else {
+                imageFolderInfo.textContent = '未选择文件夹'; imageFolderInfo.className = 'file-info';
+            }
+        });
+
+        function updateStatus(message, isLoading = false) {
+            statusText.textContent = message;
+            loadingSpinner.style.display = isLoading ? 'inline-block' : 'none';
+            const webModelProcessing = downloadAndLoadWebModelButton.disabled && downloadAndLoadWebModelButton.textContent === '处理中...';
+            if (!webModelProcessing) {
+                checkRunButtonState();
+            }
+        }
+
+        function updateMainProgress(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            mainProgressBarFill.style.width = percentage + '%';
+            mainProgressLabel.textContent = percentage + '%';
+        }
+
+        async function preprocessImage(imageFile, targetSize) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        let ratio = targetSize / Math.max(img.width, img.height);
+                        let newWidth = Math.round(img.width * ratio); let newHeight = Math.round(img.height * ratio);
+                        canvas.width = targetSize; canvas.height = targetSize;
+                        ctx.fillStyle = "white"; ctx.fillRect(0, 0, targetSize, targetSize);
+                        const offsetX = (targetSize - newWidth) / 2; const offsetY = (targetSize - newHeight) / 2;
+                        ctx.drawImage(img, offsetX, offsetY, newWidth, newHeight);
+                        const imageData = ctx.getImageData(0, 0, targetSize, targetSize);
+                        const data = imageData.data; const float32Data = new Float32Array(targetSize * targetSize * 3);
+                        let j = 0; for (let i = 0; i < data.length; i += 4) {
+                            float32Data[j++] = data[i + 2]; float32Data[j++] = data[i + 1]; float32Data[j++] = data[i + 0];
+                        }
+                        const tensor = new ort.Tensor('float32', float32Data, [1, targetSize, targetSize, 3]);
+                        resolve({ tensor, dataUrl: event.target.result, originalName: imageFile.name });
+                    };
+                    img.onerror = (err) => reject(new Error(`图像加载失败: ${imageFile.name}`));
+                    img.src = event.target.result;
+                };
+                reader.onerror = (err) => reject(new Error(`文件读取失败: ${imageFile.name}`));
+                reader.readAsDataURL(imageFile);
+            });
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("已复制到剪贴板!", 'success');
+            }, (err) => {
+                 showToast("复制失败，请手动复制。", 'error');
+            });
+        }
+
+        function applyTriggerWord(tagsArray, trigger, position) {
+            if (!trigger || position === 'none' || !tagsArray || tagsArray.length === 0) return tagsArray;
+            const triggerText = trigger.trim();
+            if (!triggerText) return tagsArray;
+            const needComma = !position.endsWith('_nocomma');
+            const copyArray = [...tagsArray];
+            const joinedTags = copyArray.join(', ');
+            if (position.startsWith('prefix')) {
+                return [triggerText + (needComma && joinedTags ? ', ' : ' ') + joinedTags];
+            } else if (position.startsWith('suffix')) {
+                 return [joinedTags + (needComma && joinedTags ? ', ' : ' ') + triggerText];
+            }
+            return [joinedTags];
+        }
+
+        async function runTagging() {
+            const imageFiles = [];
+            if (imageFilesInput.files.length > 0) {
+                for (let i = 0; i < imageFilesInput.files.length; i++) {
+                    if (imageFilesInput.files[i].type.startsWith('image/')) {
+                        imageFiles.push(imageFilesInput.files[i]);
+                    }
+                }
+            } else if (imageFolderInput.files.length > 0) {
+                for (let i = 0; i < imageFolderInput.files.length; i++) {
+                    const fileName = imageFolderInput.files[i].name.toLowerCase();
+                    if (imageFolderInput.files[i].type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp)$/.test(fileName)) {
+                         imageFiles.push(imageFolderInput.files[i]);
+                    }
+                }
+            }
+            if (imageFiles.length === 0) {
+                showToast("请先选择图像文件或包含图像的文件夹。", 'warning');
+                updateStatus("请先选择图像文件或包含图像的文件夹。", false);
+                return;
+            }
+            const inputSize = parseInt(modelInputSizeInput.value);
+            const threshold = parseFloat(thresholdInput.value);
+            const charThreshold = parseFloat(charThresholdInput.value);
+            const triggerWord = triggerWordInput.value.trim();
+            const triggerPosition = triggerPositionSelect.value;
+            updateStatus(`开始处理 ${imageFiles.length} 个图像...`, true);
+            showToast(`开始处理 ${imageFiles.length} 个图像...`, 'info');
+            runButton.disabled = true;
+            saveAllButton.disabled = true;
+            mainProgressArea.style.display = 'block';
+            allProcessedResults = [];
+            resultsContainer.innerHTML = '';
+            try {
+                for (let i = 0; i < imageFiles.length; i++) {
+                    updateStatus(`正在处理 ${i + 1} / ${imageFiles.length}: ${imageFiles[i].name}`, true);
+                    updateMainProgress(i, imageFiles.length);
+                    let cardElement = null;
+                    try {
+                        const processedImage = await preprocessImage(imageFiles[i], inputSize);
+                        const feeds = {};
+                        feeds[modelInputName] = processedImage.tensor;
+                        const outputData = await ortSession.run(feeds);
+                        const output = outputData[ortSession.outputNames[0]];
+                        const scores = output.data;
+                        let detectedTags = [];
+                        for (let j = 0; j < scores.length; j++) {
+                            const score = scores[j];
+                            const tag = allTags[j];
+                            if (tag) {
+                                const tagThreshold = tag.category === 4 ? charThreshold : threshold;
+                                if (score >= tagThreshold) {
+                                    detectedTags.push({ tag: tag.name, score: score, category: tag.category });
+                                }
+                            }
+                        }
+                        detectedTags.sort((a, b) => b.score - a.score);
+                        let tagNamesOnly = detectedTags.map(t => t.tag);
+                        const tagsWithTriggerArray = applyTriggerWord(tagNamesOnly.length > 0 ? [tagNamesOnly.join(', ')] : [], triggerWord, triggerPosition);
+                        const finalTagsStringForCopy = tagsWithTriggerArray[0] || "";
+                        allProcessedResults.push({
+                            originalName: processedImage.originalName,
+                            tagsString: finalTagsStringForCopy,
+                            dataUrl: processedImage.dataUrl
+                        });
+                        const card = document.createElement('div');
+                        card.className = 'image-result-card';
+                        const imgPreview = document.createElement('img');
+                        imgPreview.src = processedImage.dataUrl;
+                        imgPreview.alt = processedImage.originalName;
+                        card.appendChild(imgPreview);
+                        const fileNameP = document.createElement('p');
+                        fileNameP.className = 'filename';
+                        fileNameP.textContent = processedImage.originalName;
+                        card.appendChild(fileNameP);
+                        const tagsListDiv = document.createElement('div');
+                        tagsListDiv.className = 'tags-list';
+                        detectedTags.forEach(tagData => {
+                            const tagPill = document.createElement('span');
+                            tagPill.className = 'tag-pill';
+                            tagPill.textContent = tagData.tag;
+                            const scoreSpan = document.createElement('span');
+                            scoreSpan.className = 'score';
+                            scoreSpan.textContent = `(${(tagData.score).toFixed(3)})`;
+                            tagPill.appendChild(scoreSpan);
+                            tagsListDiv.appendChild(tagPill);
+                        });
+                        card.appendChild(tagsListDiv);
+                        if (finalTagsStringForCopy) {
+                            const copyBtn = document.createElement('button');
+                            copyBtn.className = 'copy-button';
+                            copyBtn.textContent = '复制标签';
+                            copyBtn.onclick = () => copyToClipboard(finalTagsStringForCopy);
+                            card.appendChild(copyBtn);
+                        }
+                        cardElement = card;
+                    } catch (error) {
+                         showToast(`处理图像 "${imageFiles[i].name}" 时出错: ${error.message}`, 'error', 5000);
+                        allProcessedResults.push({
+                            originalName: imageFiles[i].name,
+                            tagsString: `错误: ${error.message}`,
+                            dataUrl: null
+                        });
+                        const errorCard = document.createElement('div');
+                        errorCard.className = 'image-result-card';
+                        errorCard.style.border = '2px solid var(--error-color)';
+                        errorCard.style.backgroundColor = '#ffebee';
+                        const errorTitleP = document.createElement('p');
+                        errorTitleP.className = 'filename';
+                        errorTitleP.style.color = 'var(--error-color)';
+                        errorTitleP.textContent = `处理失败: ${imageFiles[i].name}`;
+                        errorCard.appendChild(errorTitleP);
+                        const errorTextP = document.createElement('p');
+                        errorTextP.style.fontSize = '0.9em';
+                        errorTextP.style.color = 'var(--error-color)';
+                        errorTextP.style.whiteSpace = 'pre-wrap';
+                        errorTextP.textContent = `错误: ${error.message}`;
+                        errorCard.appendChild(errorTextP);
+                        cardElement = errorCard;
+                    }
+                    if (cardElement) {
+                        resultsContainer.appendChild(cardElement);
+                    }
+                     await new Promise(resolve => setTimeout(resolve, 0));
+                }
+                updateMainProgress(imageFiles.length, imageFiles.length);
+                updateStatus(`处理完成: ${imageFiles.length} 个图像`, false);
+                showToast(`处理完成: ${imageFiles.length} 个图像`, 'success');
+                if (saveTxtCheckbox.checked && allProcessedResults.some(r => r.tagsString && !r.tagsString.startsWith("错误:"))) {
+                    downloadAllTagsAsZip();
+                }
+            } catch (e) {
+                updateStatus(`处理过程中出错: ${e.message}`, false);
+                showToast(`处理过程中出错: ${e.message}`, 'error');
+            } finally {
+                runButton.disabled = false;
+                checkRunButtonState();
+            }
+        }
+
+        async function downloadAllTagsAsZip() {
+             if (!allProcessedResults.some(r => r.tagsString && !r.tagsString.startsWith("错误:"))) {
+                showToast("没有有效的标签可供下载。", 'warning');
+                return;
+            }
+            updateStatus("正在创建ZIP文件...", true);
+            try {
+                const zip = new JSZip();
+                for (const result of allProcessedResults) {
+                    if (result.tagsString && !result.tagsString.startsWith("错误:")) {
+                        const fileName = result.originalName.replace(/\.[^/.]+$/, "") + '.txt';
+                        zip.file(fileName, result.tagsString);
+                    }
+                }
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const zipUrl = URL.createObjectURL(zipBlob);
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+                const a = document.createElement('a');
+                a.href = zipUrl;
+                a.download = `tags_${timestamp}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(zipUrl);
+                updateStatus("ZIP文件已下载", false);
+                showToast("ZIP文件已下载。", 'success');
+            } catch (e) {
+                updateStatus(`创建ZIP文件失败: ${e.message}`, false);
+                 showToast(`创建ZIP文件失败: ${e.message}`, 'error');
+            }
+        }
+
+        initializeApp();
+    </script>
+</body>
+</html>
